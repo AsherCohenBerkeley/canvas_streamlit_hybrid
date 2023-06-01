@@ -15,7 +15,7 @@ if 'canvas' not in st.session_state:
     print('Fetched Course')
     st.session_state.quizzes = st.session_state.course.get_quizzes()
 
-    st.session_state.bank_factor = 2
+    st.session_state.bank_factor = 1
     st.session_state.layout = \
     [(2, 0, 1, None, ["p", "q"]), \
     (2, 2, 3, None, ["p", "q"]), \
@@ -51,58 +51,64 @@ if 'canvas' not in st.session_state:
 
     print('Created New Quiz')
 
+    n = 1
+    for i, question_lst in enumerate(st.session_state.question_lsts):
+
+        new_quiz_group = st.session_state.test_quiz.create_question_group(
+            quiz_groups = [
+                {
+                    'pick_count': n_question,
+                    'question_points': 1
+                }
+            ]
+        )
+
+        for j, (text, answer) in enumerate(question_lst):
+
+            def canvas_latex(string):
+                def aux(string, n):
+                    if len(string) == 0:
+                        return ''
+                    first = string[0]
+                    rest = string[1:]
+                    if first == '$':
+                        if n % 2 == 0:
+                            return '\(' + aux(rest, n+1)
+                        else:
+                            return '\)' + aux(rest, n+1)
+                    else:
+                        return first + aux(rest, n)
+                return aux(string, 0)
+            
+            canvas_text = canvas_latex(text)
+
+            if answer: canvas_answer = 100
+            else: canvas_answer = 0
+
+            new_question = st.session_state.test_quiz.create_question(question={
+                'question_name': f'Question {n}',
+                'question_text': canvas_text,
+                'quiz_group_id': new_quiz_group.id,
+                'question_type': 'multiple_choice_question',
+                'answers': [
+                    {
+                        'answer_text': 'Yes',
+                        'answer_weight': canvas_answer
+                    },
+                    {
+                        'answer_text': 'No',
+                        'answer_weight': 100-canvas_answer
+                    },
+                    ]
+            }
+            )
+
+            print('Added New Question')
+            n += 1
+
 n = 1
 for i, question_lst in enumerate(st.session_state.question_lsts):
-
-    # new_quiz_group = test_quiz.create_question_group(
-    #     quiz_groups = [
-    #         {
-    #             'pick_count': n_question,
-    #             'question_points': 1
-    #         }
-    #     ]
-    # )
-
     for j, (text, answer) in enumerate(question_lst):
-
-        # def canvas_latex(string):
-        #     def aux(string, n):
-        #         if len(string) == 0:
-        #             return ''
-        #         first = string[0]
-        #         rest = string[1:]
-        #         if first == '$':
-        #             if n % 2 == 0:
-        #                 return '\(' + aux(rest, n+1)
-        #             else:
-        #                 return '\)' + aux(rest, n+1)
-        #         else:
-        #             return first + aux(rest, n)
-        #     return aux(string, 0)
-        
-        # text = canvas_latex(text)
-
-        # if answer: answer = 100
-        # else: answer = 0
-
-        # new_question = test_quiz.create_question(question={
-        #     'question_text': text,
-        #     'quiz_group_id': new_quiz_group.id,
-        #     'question_type': 'multiple_choice_question',
-        #     'answers': [
-        #         {
-        #             'answer_text': 'Yes',
-        #             'answer_weight': answer
-        #         },
-        #         {
-        #             'answer_text': 'No',
-        #             'answer_weight': 100-answer
-        #         },
-        #         ]
-        # }
-        # )
-
-        # print('Added New Question')
 
         st.subheader(f'Question {n}')
         st.write(text)
