@@ -232,5 +232,3 @@ def q1mcq(true=1, false=1, min_depth=0, max_depth=1, connectives = None, prop_va
         output.append((rf"Is ${nltk_to_latex_prop(conc)}$ a logical consequence of ${nltk_to_latex_prop(prem)}$?",validity))
 
     return output
-
-print(q1mcq())
