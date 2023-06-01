@@ -9,6 +9,10 @@ API_KEY = st.secrets["API_KEY"]
 # Canvas Course Number
 course_number = 1513858
 
+########################
+## INITIALIZE SESSION ##
+########################
+
 if 'canvas' not in st.session_state:
     st.session_state.canvas = Canvas(API_URL, API_KEY)
     st.session_state.course = st.session_state.canvas.get_course(course_number)
@@ -34,6 +38,8 @@ if 'canvas' not in st.session_state:
     ]
 
     st.session_state.question_lsts = []
+    
+    st.session_state.answers = []
 
     for (n_question, min_depth, max_depth, connectives, prop_vars) in st.session_state.layout:
 
@@ -44,84 +50,16 @@ if 'canvas' not in st.session_state:
             max_depth=max_depth,\
             connectives=None,\
             prop_vars=prop_vars)
+        
+        for text, answer in question_lst:
+            st.session_state.answers.append(answer)
+            st.session_state.n_questions += 1
 
         st.session_state.question_lsts.append(question_lst)
 
-    for quiz in st.session_state.quizzes:
-        if quiz.title == 'New Test Quiz':
-            quiz.delete()
-            print('Deleted Old Quiz')
-
-    st.session_state.test_quiz = st.session_state.course.create_quiz(quiz={
-        'title': "New Test Quiz",
-        'description': "This is a test to see if the Canvas API is working properly.",
-        'quiz_type': 'assignment',
-        'allowed_attempts': -1,
-        'scoring_policy': 'keep_highest',
-        'published': False
-    })
-
-    print('Created New Quiz')
-
-    st.session_state.answers = []
-
-    n = 0
-    for i, question_lst in enumerate(st.session_state.question_lsts):
-
-        new_quiz_group = st.session_state.test_quiz.create_question_group(
-            quiz_groups = [
-                {
-                    'pick_count': n_question,
-                    'question_points': 1
-                }
-            ]
-        )
-
-        for j, (text, answer) in enumerate(question_lst):
-
-            st.session_state.answers.append(answer)
-
-            def canvas_latex(string):
-                def aux(string, n):
-                    if len(string) == 0:
-                        return ''
-                    first = string[0]
-                    rest = string[1:]
-                    if first == '$':
-                        if n % 2 == 0:
-                            return '\(' + aux(rest, n+1)
-                        else:
-                            return '\)' + aux(rest, n+1)
-                    else:
-                        return first + aux(rest, n)
-                return aux(string, 0)
-            
-            canvas_text = canvas_latex(text)
-
-            if answer: canvas_answer = 100
-            else: canvas_answer = 0
-
-            new_question = st.session_state.test_quiz.create_question(question={
-                'question_name': f'Question {n+1}',
-                'question_text': canvas_text,
-                'quiz_group_id': new_quiz_group.id,
-                'question_type': 'text_only_question',
-                # 'answers': [
-                #     {
-                #         'answer_text': 'Yes',
-                #         'answer_weight': canvas_answer
-                #     },
-                #     {
-                #         'answer_text': 'No',
-                #         'answer_weight': 100-canvas_answer
-                #     },
-                #     ]
-            }
-            )
-
-            print('Added New Question')
-            n += 1
-            st.session_state.n_questions += 1
+################
+## NAME INPUT ##
+################
 
 if 'student_name' in st.session_state and len(st.session_state.student_name) != 0:
     try:
@@ -140,6 +78,10 @@ st.text_input('Please input your name as written on bCourses', key='student_name
 if 'student_name' in st.session_state and len(st.session_state.student_name) != 0 and 'ColumnData' not in st.session_state:
     st.write("We couldn't find a student on the bCourses roster by this name? Are you sure this is exactly as you full name is written on bCourses?")
 
+#######################
+## DISPLAY QUESTIONS ##
+#######################
+
 if 'ColumnData' in st.session_state:
     st.write('')
     st.write('')
@@ -156,10 +98,16 @@ if 'ColumnData' in st.session_state:
                 label_visibility='collapsed',
                 disabled = st.session_state.sent_scores 
                 )
+
             st.write('')
             st.write('')
             st.write('')
+            
             n += 1
+
+    #########################################
+    ## SUBMIT, GRADE, AND SEND TO BCOURSES ##
+    #########################################
 
     def submit_answers_button():
         overall_score = 0
