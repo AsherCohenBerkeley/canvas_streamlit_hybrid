@@ -1,5 +1,6 @@
 import streamlit as st
 from canvasapi import Canvas
+import pset2mcq_bank
 
 # Canvas API URL
 API_URL = "https://bcourses.berkeley.edu/"
@@ -34,24 +35,21 @@ if 'canvas' not in st.session_state:
 
         st.session_state.question_lsts.append(question_lst)
 
-for quiz in st.session_state.quizzes:
-    if quiz.title == 'New Test Quiz':
-        quiz.delete()
+    for quiz in st.session_state.quizzes:
+        if quiz.title == 'New Test Quiz':
+            quiz.delete()
+            print('Deleted Old Quiz')
 
-print('Deleted Old Quiz')
+    st.session_state.test_quiz = st.session_state.course.create_quiz(quiz={
+        'title': "New Test Quiz",
+        'description': "This is a test to see if the Canvas API is working properly.",
+        'quiz_type': 'assignment',
+        'allowed_attempts': -1,
+        'scoring_policy': 'keep_highest',
+        'published': False
+    })
 
-test_quiz = st.session_state.course.create_quiz(quiz={
-    'title': "New Test Quiz",
-    'description': "This is a test to see if the Canvas API is working properly.",
-    'quiz_type': 'assignment',
-    'allowed_attempts': -1,
-    'scoring_policy': 'keep_highest',
-    'published': False
-})
-
-print('Created New Quiz')
-
-import pset2mcq_bank 
+    print('Created New Quiz')
 
 layout = \
     [(2, 0, 1, None, ["p", "q"]), \
@@ -60,7 +58,8 @@ layout = \
 
 bank_factor = 2
 
-for question_lst in st.session_state.question_lsts:
+n = 1
+for i, question_lst in enumerate(st.session_state.question_lsts):
 
     # new_quiz_group = test_quiz.create_question_group(
     #     quiz_groups = [
@@ -71,7 +70,7 @@ for question_lst in st.session_state.question_lsts:
     #     ]
     # )
 
-    for (text, answer) in question_lst:
+    for j, (text, answer) in enumerate(question_lst):
 
         # def canvas_latex(string):
         #     def aux(string, n):
@@ -112,12 +111,17 @@ for question_lst in st.session_state.question_lsts:
 
         # print('Added New Question')
 
-        st.write('text')
+        st.subheader(f'Question {n}')
+        st.write(text)
         default_option = '---'
-        student_answer = st.selectbox('', options=[default_option, 'Yes', 'No'])
+        student_answer = st.selectbox('Your Answer', options=[default_option, 'Yes', 'No'], key=f'{n}')
         translation_table = {'Yes': True, 'No': False}
         if student_answer != default_option:
             if translation_table[student_answer] == answer:
                 st.write('Yay! Correct!')
             else:
                 st.write("Unfortunately, that's wrong.")
+        st.write('')
+        st.write('')
+        st.write('')
+        n += 1
