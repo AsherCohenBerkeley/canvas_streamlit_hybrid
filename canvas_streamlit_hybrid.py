@@ -51,13 +51,6 @@ if 'canvas' not in st.session_state:
 
     print('Created New Quiz')
 
-layout = \
-    [(2, 0, 1, None, ["p", "q"]), \
-    (2, 2, 3, None, ["p", "q"]), \
-    (2, 2, 3, None, ["p", "q", "r"])]
-
-bank_factor = 2
-
 n = 1
 for i, question_lst in enumerate(st.session_state.question_lsts):
 
